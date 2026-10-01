@@ -1,0 +1,11 @@
+[
+    {
+        "image_path": "data\\processed\\ct_scans\\dicom\\test\\CONTRAST\\ID_0001_AGE_0069_CONTRAST_1_CT.png",
+        "predicted_class": "CONTRAST",
+        "confidence": 0.7098449468612671,
+        "probabilities": {
+            "NO_CONTRAST": 0.2901550829410553,
+            "CONTRAST": 0.7098449468612671
+        }
+    }
+]

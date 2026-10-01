@@ -1,0 +1,54 @@
+{
+    "task": "ct",
+    "n_splits": 5,
+    "freeze_mode": "most",
+    "mean_accuracy": 0.655,
+    "std_accuracy": 0.07810249675906654,
+    "oof_accuracy": 0.655,
+    "oof_precision": 0.6597938144329897,
+    "oof_recall": 0.64,
+    "oof_f1": 0.649746192893401,
+    "oof_roc_auc": 0.6927,
+    "fold_details": [
+        {
+            "fold": 1,
+            "accuracy": 0.7,
+            "precision": 0.8333333333333334,
+            "recall": 0.5,
+            "f1_score": 0.625,
+            "roc_auc": 0.7875000000000001
+        },
+        {
+            "fold": 2,
+            "accuracy": 0.775,
+            "precision": 0.8235294117647058,
+            "recall": 0.7,
+            "f1_score": 0.7567567567567568,
+            "roc_auc": 0.815
+        },
+        {
+            "fold": 3,
+            "accuracy": 0.65,
+            "precision": 0.6,
+            "recall": 0.9,
+            "f1_score": 0.72,
+            "roc_auc": 0.7474999999999999
+        },
+        {
+            "fold": 4,
+            "accuracy": 0.55,
+            "precision": 0.5833333333333334,
+            "recall": 0.35,
+            "f1_score": 0.4375,
+            "roc_auc": 0.605
+        },
+        {
+            "fold": 5,
+            "accuracy": 0.6,
+            "precision": 0.5769230769230769,
+            "recall": 0.75,
+            "f1_score": 0.6521739130434783,
+            "roc_auc": 0.6425000000000001
+        }
+    ]
+}

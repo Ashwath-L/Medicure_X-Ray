@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RadPulse Clinical Intelligence | AI Diagnostic PACS</title>
+  <meta name="description" content="Medical AI diagnostic suite for automated Pneumonia detection on Chest X-Rays and Contrast enhancement classification on CT scans.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-obsidian">
+  <!-- Top Navigation Bar -->
+  <header class="navbar" id="main-header">
+    <div class="nav-brand">
+      <div class="brand-badge">
+        <span class="pulse-dot"></span>
+        <span class="brand-pacs">PACS-AI</span>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">RadPulse</span>
+        <span class="brand-subtitle">Clinical Diagnostic Console</span>
+      </div>
+    </div>
+
+    <!-- Modality Selector Segmented Control -->
+    <div class="modality-switch" id="modality-toggle">
+      <button class="modality-btn active" data-task="xray" id="btn-modality-xray">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"/></svg>
+        <span>Chest X-Ray</span>
+        <span class="tag-pill">97.7% AUC</span>
+      </button>
+      <button class="modality-btn" data-task="ct" id="btn-modality-ct">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span>CT Tomography</span>
+        <span class="tag-pill tag-ens">5-Fold Ens</span>
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-controls">
+      <nav class="nav-tabs">
+        <button class="tab-btn active" id="tab-btn-console" data-view="console">Console</button>
+        <button class="tab-btn" id="tab-btn-metrics" data-view="metrics">Validation Lab</button>
+      </nav>
+      <div class="system-status">
+        <span class="status-indicator"></span>
+        <span class="status-label" id="engine-status">DenseNet-121 Ready</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Diagnostic Workspace -->
+  <main class="workspace" id="app-workspace">
+    <!-- VIEW 1: DIAGNOSTIC CONSOLE -->
+    <section class="view-panel active" id="view-console">
+      <div class="console-grid">
+        
+        <!-- Left Column: Image Ingestion & Sample Scans -->
+        <aside class="panel ingestion-panel">
+          <div class="panel-header">
+            <span class="panel-title">SCAN INGESTION</span>
+            <span class="panel-meta" id="format-support">PNG · JPEG · DICOM · TIFF</span>
+          </div>
+
+          <!-- Drag and Drop Dropzone -->
+          <div class="dropzone" id="drop-area">
+            <input type="file" id="file-input" accept=".png,.jpg,.jpeg,.dcm,.dicom,.tif,.tiff" class="file-hidden">
+            <div class="dropzone-content">
+              <div class="upload-icon-wrapper">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                </svg>
+              </div>
+              <p class="drop-lead">Drop medical scan here</p>
+              <p class="drop-sub">or <span class="browse-link">browse patient study</span></p>
+            </div>
+          </div>
+
+          <!-- Curated Medical Samples Showcase -->
+          <div class="sample-library">
+            <div class="library-header">
+              <span class="library-title">QUICK STUDY LIBRARY</span>
+              <span class="library-sub">1-Click Test Scans</span>
+            </div>
+            <div class="sample-cards" id="sample-container">
+              <!-- Dynamically populated from /api/samples -->
+              <div class="sample-skeleton">Loading benchmark studies...</div>
+            </div>
+          </div>
+
+          <!-- Inference Settings Controls -->
+          <div class="inference-settings">
+            <div class="setting-item">
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-ensemble" checked>
+                <span class="slider"></span>
+              </label>
+              <div class="setting-label">
+                <span class="setting-name">5-Fold Stratified Ensemble</span>
+                <span class="setting-desc">Averages softmax across 5 distinct fold models</span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-clahe" checked>
+                <span class="slider"></span>
+              </label>
+              <div class="setting-label">
+                <span class="setting-name">Adaptive Contrast Enhancement</span>
+                <span class="setting-desc">CLAHE / Soft-Tissue HU windowing</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Center Column: PACS Viewport with Clinical Controls -->
+        <section class="panel viewport-panel">
+          <div class="viewport-header">
+            <div class="study-meta">
+              <span class="meta-label">STUDY VIEWPORT:</span>
+              <span class="meta-filename" id="active-filename">No image loaded</span>
+            </div>
+            
+            <!-- Radiologist Viewport Tools -->
+            <div class="viewport-tools">
+              <button class="tool-btn active" id="btn-view-raw" title="Standard Image">Normal</button>
+              <button class="tool-btn" id="btn-view-heatmap" title="Visual Attention / Grad-CAM">Attention Map</button>
+              <button class="tool-btn" id="btn-invert" title="Invert Monochrome">Invert</button>
+              <button class="tool-btn" id="btn-reset-zoom" title="Reset View">Reset</button>
+            </div>
+          </div>
+
+          <!-- The Clinical Viewport Stage -->
+          <div class="viewport-stage" id="viewport-stage">
+            <div class="viewport-placeholder" id="viewport-empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="2" y="2" width="20" height="20" rx="2.5"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p>Awaiting medical study ingestion</p>
+              <span>Select a sample study or drag & drop a scan</span>
+            </div>
+            
+            <div class="image-wrapper" id="image-wrapper" style="display: none;">
+              <img id="display-image" src="" alt="Medical Scan" class="medical-render">
+              <div class="hud-crosshairs"></div>
+              <div class="hud-corners top-left" id="hud-top-left">MOD: <span id="hud-modality">CHEST_XRAY</span></div>
+              <div class="hud-corners top-right" id="hud-top-right">RES: 224×224 px</div>
+              <div class="hud-corners bottom-left" id="hud-bottom-left">ZOOM: 1.0x</div>
+              <div class="hud-corners bottom-right" id="hud-bottom-right">WINDOW: CLINICAL</div>
+            </div>
+
+            <div class="loading-overlay" id="loading-overlay">
+              <div class="scanner-line"></div>
+              <div class="loader-spinner"></div>
+              <span class="loading-text">Computing DenseNet-121 activations...</span>
+            </div>
+          </div>
+
+          <!-- Viewport Interactive Slider Bar -->
+          <div class="viewport-footer">
+            <div class="slider-control">
+              <span class="slider-label">BRIGHTNESS:</span>
+              <input type="range" id="slider-brightness" min="50" max="150" value="100">
+            </div>
+            <div class="slider-control">
+              <span class="slider-label">CONTRAST:</span>
+              <input type="range" id="slider-contrast" min="50" max="200" value="100">
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Diagnostic Findings & Probability Telemetry -->
+        <aside class="panel findings-panel">
+          <div class="panel-header">
+            <span class="panel-title">DIAGNOSTIC FINDINGS</span>
+            <span class="panel-badge-live">LIVE INFERENCE</span>
+          </div>
+
+          <!-- Primary Result Card -->
+          <div class="primary-verdict-card" id="verdict-card">
+            <div class="verdict-kicker">PREDICTED CLASSIFICATION</div>
+            <div class="verdict-class" id="verdict-class">—</div>
+            <div class="verdict-confidence-bar">
+              <div class="bar-fill" id="confidence-bar-fill"></div>
+            </div>
+            <div class="verdict-confidence-row">
+              <span>Confidence Score</span>
+              <span class="confidence-val" id="verdict-confidence">0.0%</span>
+            </div>
+          </div>
+
+          <!-- Probability Distribution Gauge -->
+          <div class="probability-breakdown">
+            <div class="section-label">CLASS PROBABILITIES</div>
+            
+            <div class="prob-row">
+              <div class="prob-info">
+                <span class="prob-name" id="class-0-name">CLASS 0</span>
+                <span class="prob-score" id="class-0-pct">0.0%</span>
+              </div>
+              <div class="prob-track">
+                <div class="prob-fill class-0-fill" id="class-0-bar"></div>
+              </div>
+            </div>
+
+            <div class="prob-row">
+              <div class="prob-info">
+                <span class="prob-name" id="class-1-name">CLASS 1</span>
+                <span class="prob-score" id="class-1-pct">0.0%</span>
+              </div>
+              <div class="prob-track">
+                <div class="prob-fill class-1-fill" id="class-1-bar"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5-Fold Ensemble Voting Details -->
+          <div class="ensemble-telemetry">
+            <div class="section-label">ENSEMBLE VOTING TELEMETRY</div>
+            <div class="fold-votes-list" id="fold-votes-container">
+              <div class="empty-telemetry">Run diagnosis to inspect per-fold model voting.</div>
+            </div>
+          </div>
+
+          <!-- Clinical Export & Audit Action -->
+          <div class="action-footer">
+            <button class="action-btn" id="btn-export-report" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>Export Clinical Summary</span>
+            </button>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- VIEW 2: VALIDATION LAB & PERFORMANCE BENCHMARKS -->
+    <section class="view-panel" id="view-metrics">
+      <div class="metrics-grid">
+        
+        <!-- Metrics Column Left: Chest X-Ray -->
+        <div class="panel metrics-card">
+          <div class="panel-header">
+            <span class="panel-title">CHEST X-RAY BENCHMARK</span>
+            <span class="tag-pill tag-green">87.98% Accuracy</span>
+          </div>
+          <div class="stats-metric-row">
+            <div class="stat-box">
+              <span class="stat-val">99.23%</span>
+              <span class="stat-lbl">Sensitivity / Recall</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val">0.9773</span>
+              <span class="stat-lbl">ROC-AUC Score</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val">91.17%</span>
+              <span class="stat-lbl">F1-Score</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val">624</span>
+              <span class="stat-lbl">Test Cohort Size</span>
+            </div>
+          </div>
+          <div class="cm-wrapper">
+            <div class="cm-title">Confusion Matrix (624 Test Cases)</div>
+            <img id="xray-cm-img" class="cm-render" alt="Chest X-Ray Confusion Matrix" src="">
+          </div>
+        </div>
+
+        <!-- Metrics Column Right: CT Scans -->
+        <div class="panel metrics-card">
+          <div class="panel-header">
+            <span class="panel-title">CT SCAN 5-FOLD STRATIFIED CV</span>
+            <span class="tag-pill tag-ens">Ensemble ROC-AUC: 81.25%</span>
+          </div>
+          <div class="stats-metric-row">
+            <div class="stat-box">
+              <span class="stat-val">77.50%</span>
+              <span class="stat-lbl">Peak Single Fold</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val">70.00%</span>
+              <span class="stat-lbl">Ensemble Sensitivity</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val">81.25%</span>
+              <span class="stat-lbl">Ensemble ROC-AUC</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val">200</span>
+              <span class="stat-lbl">DICOM/TIFF Scans</span>
+            </div>
+          </div>
+          <div class="cm-wrapper">
+            <div class="cm-title">Cross-Validation Matrix (Test Evaluation)</div>
+            <img id="ct-cm-img" class="cm-render" alt="CT Scan Confusion Matrix" src="">
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
